@@ -1,0 +1,225 @@
+---
+title: "Title"
+author: Name; Chaminade University of Honolulu; Email
+date: "`r Sys.Date()`"
+#output: tufte::tufte_html
+output: 
+  html_document:
+    theme: readable #https://www.datadreaming.org/post/r-markdown-theme-gallery/
+    toc: TRUE
+    toc_float: TRUE
+    code_folding: hide
+    code_download: TRUE
+---
+```{r include=FALSE}
+#Set WD and Get WD
+#setwd("/work2/#####/username/foldername")
+#setwd("/work2/#####/username")
+#setwd("/home1/#####/username")
+current_directory <- getwd()
+
+#Load Packages
+library(tidyverse)
+library(scales)
+library(ggplot2)
+library(tufte)
+#library(ggflags) 
+library(countrycode)
+
+#library(rmdformats)
+#library("knitr")
+```
+
+```{r include=FALSE}
+#Load Data
+clarasData1_attendance <- read.csv("AttendanceDataset.csv")
+
+summary(clarasData1_attendance)
+str(clarasData1_attendance)
+
+#Change Columns "Total" and "Games" from Class character to numeric! - so can make calculations!
+clarasData1_attendance$Total <- as.numeric(gsub(",", "", clarasData1_attendance$Total))
+clarasData1_attendance$Games <- as.numeric(clarasData1_attendance$Games)
+str(clarasData1_attendance) #run to see that changed from "chr" to "num"
+```
+
+# 1. Introduction
+
+Type here
+
+----------------------------------------------------------
+
+# 2. Background
+
+Type here
+
+----------------------------------------------------------
+
+# 3. Research Questions
+
+Type here
+
+----------------------------------------------------------
+
+# 4. Methods and Programs Used
+
+Type here
+
+----------------------------------------------------------
+
+# 5. Results
+**Figure 1:**
+```{r}
+####### Subsetting data - only pulling World Cup Rows
+subsetdata_WC <- filter(clarasData1_attendance, League == "World Cup")
+
+####### Calculating av game att of each World Cup
+avGameAtt_WC <- subsetdata_WC %>% #%>% chains multiple functions together
+  group_by(Season) %>%
+  summarise(result = round(sum(Total) / sum(Games))) %>%
+  pull(result)
+
+print(avGameAtt_WC)
+  
+####### Creating Data Visual 
+WCdata <- data.frame(
+  season = c("2011", "2015", "2019", "2023"),
+  averageAtt = c(26398, 21628, 21756, 30911)
+)
+
+ggplot(WCdata, aes(x = season, y = averageAtt)) +
+  geom_bar(stat = "identity", fill = "gold") +
+  geom_text(aes(label = averageAtt), vjust = -0.5, color = "black", size = 3.3) +
+  labs(x = "Year", y = "Average Attendance", title = "Women's World Cup", subtitle = "Average Game Attendance") +
+  theme_light()
+```
+
+Figure 1 demonstrates 
+
+**Figure 2:**
+```{r}
+####### Subsetting NWSL Data
+subsetdata_NWSL <- filter(clarasData1_attendance, League == "NWSL")
+
+####### Calculating avg game att each season for NWSL
+avGameAtt_NWSL <- subsetdata_NWSL %>%
+  group_by(Season) %>%
+  summarise(avGameAtt = round(sum(Total) / sum(Games))) %>%
+  pull(avGameAtt)
+
+print(avGameAtt_NWSL)
+
+####### Creating Data Vis
+NWSLdata <- data.frame(
+  season = c("2013", "2014", "2015", "2016", "2017", "2018", "2019", "2021", "2022", "2023", "2024"),
+  avg_att = c(2971, 2760, 5095, 5590, 5083, 6024, 7386, 4008, 6984, 10392, 11089)
+)
+
+ggplot(NWSLdata, aes(x = season, y = avg_att)) +
+  geom_line(aes(group = 1), color = "red") +  # Add a line, specifying group = 1
+  geom_point() + # Add points
+  labs(
+    title = "NWSL Average Game Attendance",
+    subtitle = "Season 2013-2024",
+    x = "Season",
+    y = "Average Attendance"
+  ) +
+  theme_light()
+```
+
+Figure 2 demonstrates 
+
+**Figure 3:**
+```{r}
+####### Subsetting only WSL data
+subsetdata_WSL <- filter(clarasData1_attendance, League == "WSL")
+
+####### Calculating av game att every other season for WSL in the dataset
+avGameAtt_WSL <- subsetdata_WSL %>%
+  filter(Season %in% c("2011-2012", "2013-2014", "2017-2018", "2019-2020", "2021-2022", "2023-2024")) %>%
+  group_by(Season) %>%
+  summarise(avGameAtt = round(sum(Total) / sum(Games))) %>%
+  pull(avGameAtt)
+
+print(avGameAtt_WSL)
+
+####### Creating Data Vis
+WSLdata <- data.frame(
+  season = c("2011-2012", "2013-2014", "2017-2018", "2019-2020", "2021-2022", "2023-2024"),
+  avg_att = c(239, 671, 722, 3066, 1589, 6988)
+)
+
+ggplot(WSLdata, aes(x = season, y = avg_att)) +
+  geom_line(aes(group = 1), color = "navy") +  # Add a line, specifying group = 1
+  geom_point() + # Add points
+  labs(
+    title = "WSL Average Game Attendance",
+    x = "Season",
+    y = "Average Attendance"
+  ) +
+  theme_light()
+```
+
+Figure 3 demonstrates 
+
+```{r}
+library(ggplot2)
+library(ggflags)
+devtools::install_github('rensa/ggflags')
+library(countrycode) # to convert country names to country codes
+
+
+# Example dataset with Year, Attendance, and country codes
+data <- data.frame(
+  Year = c("2011", "2015", "2019", "2023"),  # Years of the events
+  Attendance = c(48817, 53341, 53512, 75784),  # Attendance numbers
+  Code = c("jp", "us", "us", "es")  # ISO 3166-1 alpha-2 codes for the flags
+)
+
+# Create the bar chart with flags
+ggplot(data, aes(x = Year, y = Attendance)) +
+  geom_bar(stat = "identity", fill = "#BCD2E8", color = "black") +
+  geom_flag(aes(y = Attendance + 2000, country = Code), size = 10) +  # Adjust the size and position as needed
+  theme_minimal() +
+  labs(title = "World Cup Championship Game Attendance",
+       x = "Year",
+       y = "Attendance") +
+  coord_cartesian(ylim = c(0, 80000)) +  # Adjust y-axis limits to emphasize changes
+  theme(
+    axis.line = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    panel.grid = element_blank(),
+    panel.background = element_blank()
+  )
+```
+
+----------------------------------------------------------
+
+# 6. Discussion
+
+Type here
+
+----------------------------------------------------------
+
+# 7. Limitations 
+
+Type here
+
+----------------------------------------------------------
+
+# 8. Future Research 
+
+Type here
+
+----------------------------------------------------------
+
+# 9. References
+
+Type here
+
+----------------------------------------------------------
+
+# 10. Acknowledgements
+
+Type here
